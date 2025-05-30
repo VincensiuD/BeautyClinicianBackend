@@ -46,3 +46,15 @@ app.get('/api/clinicians', async(req,res) => {
         console.error("ERROR ", error);
     }
 })
+
+//Retrieve clinician by id
+app.get('/api/clinician/:id', async(req,res) => {
+    try {
+        const {id} = req.params
+        const clinicans = await Clinician.findById(id);
+        res.status(200).json(clinicans);
+        console.log('sent ');
+    } catch (error) {
+        console.error("ERROR ", error);
+    }
+})
