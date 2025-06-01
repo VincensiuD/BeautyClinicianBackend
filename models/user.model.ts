@@ -19,9 +19,9 @@ const UserSchema = new mongoose.Schema(
 
     roleID: {
       type: Number,
-      ref: 'Role',  
+      ref: "Role",
       required: true,
-    }
+    },
   },
   {
     timestamps: true,
@@ -29,4 +29,3 @@ const UserSchema = new mongoose.Schema(
 );
 
 export const User = mongoose.model("User", UserSchema);
-

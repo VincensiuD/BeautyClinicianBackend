@@ -75,27 +75,27 @@ app.post("/api/user", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
     console.log(salt, hashedPassword);
 
-    if(mobileNumber.length < 10 && mobileNumber.startsWith("04")){
+    if (mobileNumber.length < 10 && mobileNumber.startsWith("04")) {
       throw new Error("Mobile number should be 10 digits and starts with 04");
     }
 
-    const exisitingUser = await User.findOne({mobileNumber});
-    
-    if(exisitingUser){
-      throw new Error("You have an existing account with us, please login instead");
+    const exisitingUser = await User.findOne({ mobileNumber });
+
+    if (exisitingUser) {
+      throw new Error(
+        "You have an existing account with us, please login instead"
+      );
     }
 
-    const LegitRoles = await Role.findOne({ID: roleID});
+    const LegitRoles = await Role.findOne({ ID: roleID });
 
-    if(LegitRoles){
+    if (LegitRoles) {
       const newUser = { roleID, password: hashedPassword, name, mobileNumber };
       await User.create(newUser);
       res.status(200).send("New user created");
-    }
-    else{
+    } else {
       throw new Error("Invalid Role");
     }
-
   } catch (error) {
     console.error(error);
     res.status(500).send("ERROR: " + error);
@@ -106,32 +106,31 @@ app.post("/api/user", async (req, res) => {
 app.post("/api/login", async (req, res) => {
   try {
     const { password, mobileNumber } = req.body;
- 
-    if(mobileNumber.length < 10 && mobileNumber.startsWith("04")){
-      throw new Error("Please check your mobile number, it should be 10 digits and starts with 04");
+
+    if (mobileNumber.length < 10 && mobileNumber.startsWith("04")) {
+      throw new Error(
+        "Please check your mobile number, it should be 10 digits and starts with 04"
+      );
     }
 
-    const user = await User.findOne({mobileNumber});
+    const user = await User.findOne({ mobileNumber });
 
-    if(!user){
+    if (!user) {
       throw new Error("Mobile number not found, please create a new account");
     }
 
     const match = await bcrypt.compare(password, user.password);
 
-    if(!match){
+    if (!match) {
       throw new Error("Password does not match");
     }
 
-    res.status(200).send('Login succesful');
-    
-
+    res.status(200).send("Login succesful");
   } catch (error) {
     console.error(error);
     res.status(500).send("ERROR: " + error);
   }
 });
-
 
 //create role
 app.post("/api/role", async (req, res) => {
