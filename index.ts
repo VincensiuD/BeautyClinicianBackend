@@ -1,12 +1,14 @@
-import express, { Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { User } from "./models/user.model";
+import { Clinician } from "./models/clinician.model";
 const mongoose = require("mongoose");
-const Clinician = require("./models/clinician.model.ts");
+
 const { Role } = require("./models/role.model.ts");
 require("dotenv").config();
 
 const app = express();
 app.use(express.json());
+const jwt = require("jsonwebtoken");
 
 const mongoURI = process.env.MONGO_URI;
 const bcrypt = require("bcrypt");
@@ -24,14 +26,15 @@ mongoose
       console.log("connected to Server");
     });
   })
-  .catch(() => {
+  .catch((error: Error) => {
     console.error("connection to server failed");
+    console.error(error);
   });
 
 // Post new clinician
-app.post("/api/clinician", async (req, res) => {
+app.post("/api/clinician", authenticateToken, async (req, res) => {
   try {
-    console.log(req.body);
+    //console.log(req.body);
     await Clinician.create(req.body);
     res.send("data created in DB");
   } catch (error) {
@@ -51,7 +54,7 @@ app.get("/api/clinicians", async (req, res) => {
 });
 
 //Retrieve clinician by id
-app.get("/api/clinician/:id", async (req, res) => {
+app.get("/api/clinician/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const clinicans = await Clinician.findById(id);
@@ -92,7 +95,7 @@ app.post("/api/user", async (req, res) => {
     if (LegitRoles) {
       const newUser = { roleID, password: hashedPassword, name, mobileNumber };
       await User.create(newUser);
-      res.status(200).send("New user created");
+      res.status(201).send("New user created");
     } else {
       throw new Error("Invalid Role");
     }
@@ -125,6 +128,29 @@ app.post("/api/login", async (req, res) => {
       throw new Error("Password does not match");
     }
 
+    const userObj = { name: user.name, mobileNumber: user.mobileNumber };
+
+    const accessToken = jwt.sign(userObj, process.env.ACCESS_TOKEN_SECRET, {
+      expiresIn: "1h",
+    });
+    const refreshToken = jwt.sign(userObj, process.env.REFRESH_TOKEN_SECRET);
+    res.json({ accessToken, refreshToken });
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 60 * 60 * 1000,
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      path: "/refresh", // Only send this cookie to /refresh endpoint
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     res.status(200).send("Login succesful");
   } catch (error) {
     console.error(error);
@@ -142,3 +168,53 @@ app.post("/api/role", async (req, res) => {
     res.status(500).send(error);
   }
 });
+
+// app.post('/token', (req, res) => {
+//   const refreshToken = req.body.token
+//   if(!refreshToken) return res.sendStatus(401);
+
+// })
+
+//token authentication middleware
+
+interface CustomRequest extends Request {
+  user?: User;
+}
+
+interface User {
+  phoneNumber: string;
+  name: string;
+}
+
+function authenticateToken(
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    const bibi = authHeader ? authHeader.split(" ")[1] : "ssss";
+    console.log("token", bibi);
+    if (!token) {
+      res.sendStatus(401);
+      return;
+    }
+    jwt.verify(
+      token,
+      process.env.ACCESS_TOKEN_SECRET,
+      (err: Error | null, user: any) => {
+        if (err) {
+          res.sendStatus(401);
+          return;
+        }
+        req.user = user;
+        next();
+      }
+    );
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// function generateToken() {}
