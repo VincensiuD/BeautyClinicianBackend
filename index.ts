@@ -1,12 +1,17 @@
 import express, { Request, Response, NextFunction } from "express";
 import { User } from "./models/user.model";
-import { Clinician } from "./models/clinician.model";
+import { Title } from "./models/title.models"
+import { Clinician, IClinician } from "./models/clinician.model";
+
 const mongoose = require("mongoose");
+const cors = require("cors");
 
 const { Role } = require("./models/role.model.ts");
 require("dotenv").config();
 
 const app = express();
+app.use(cors({ origin: "http://localhost:5173" }));
+
 app.use(express.json());
 const jwt = require("jsonwebtoken");
 
@@ -45,8 +50,20 @@ app.post("/api/clinician", authenticateToken, async (req, res) => {
 // Retrieve all clinicans
 app.get("/api/clinicians", async (req, res) => {
   try {
-    const clinicans = await Clinician.find({});
-    res.status(200).json(clinicans);
+  //  const clinicians = await Clinician.find({}).lean<IClinician[]>();
+   const clinicians = await Clinician.find()
+  .sort({ titleID: 1 }).populate('titleID')
+  .lean();
+
+  const formatted = clinicians.map(c => ({
+  ID: c.ID,
+  name: c.name,
+  title: (c.titleID as any).name, // cast to access title name
+  description: c.description,
+  image: c.image,
+}));
+
+    res.status(200).json(formatted);
     console.log("sent ");
   } catch (error) {
     console.error("ERROR ", error);
@@ -169,6 +186,18 @@ app.post("/api/role", async (req, res) => {
   }
 });
 
+app.put("/api/role", async (req, res) => {
+  try {
+    const { ID } = req.body;
+    const clinician = await Clinician.findOne({ ID });
+    // await Clinician.update(req.body);
+    res.status(201).send("OK");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(error);
+  }
+});
+
 // app.post('/token', (req, res) => {
 //   const refreshToken = req.body.token
 //   if(!refreshToken) return res.sendStatus(401);
@@ -218,3 +247,15 @@ function authenticateToken(
 }
 
 // function generateToken() {}
+
+
+// create title
+app.post("/api/title", async (req, res) => {
+  try {
+    await Title.create(req.body);
+    res.status(201).send("New Title Created");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(error);
+  }
+});

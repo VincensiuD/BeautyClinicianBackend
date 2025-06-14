@@ -13,9 +13,10 @@ const ClinicianSchema = new mongoose.Schema(
       required: true,
     },
 
-    title: {
-      type: String,
+    titleID: {
+      type: Number,
       required: true,
+      ref: "Title",
     },
 
     description: {
@@ -34,3 +35,11 @@ const ClinicianSchema = new mongoose.Schema(
 );
 
 export const Clinician = mongoose.model("Clinician", ClinicianSchema);
+
+export interface IClinician {
+    ID: number;
+    name:string;
+    title: string;
+    description: string;
+    image: string;
+}
