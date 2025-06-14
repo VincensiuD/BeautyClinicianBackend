@@ -1,14 +1,14 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-const roleSchema = new Schema(
+const titleSchema = new Schema(
   {
-    ID: {
+    _id: {
       type: Number,
       unique: true,
       required: true,
     },
 
-    title: {
+    name: {
       type: String,
       required: true,
     },
@@ -18,4 +18,4 @@ const roleSchema = new Schema(
   }
 );
 
-export const Role = mongoose.model("Role", roleSchema);
+export const Title = mongoose.model("Title", titleSchema);
