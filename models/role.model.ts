@@ -2,9 +2,8 @@ import mongoose, { Schema, Document } from "mongoose";
 
 const roleSchema = new Schema(
   {
-    ID: {
+    _id: {
       type: Number,
-      unique: true,
       required: true,
     },
 
