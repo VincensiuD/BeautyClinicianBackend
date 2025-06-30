@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from "express";
 import { User } from "./models/user.model";
 import { Title } from "./models/title.models";
 import { Clinician } from "./models/clinician.model";
+import cookieParser from "cookie-parser";
 
 
 const mongoose = require("mongoose");
@@ -12,7 +13,7 @@ require("dotenv").config();
 
 const app = express();
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
-
+app.use(cookieParser());
 app.use(express.json());
 const jwt = require("jsonwebtoken");
 
@@ -156,8 +157,8 @@ app.post("/api/login", async (req, res) => {
     res
       .cookie("accessToken", accessToken, {
         httpOnly: true,
-        secure: true,
-        sameSite: "strict",
+        secure: false,
+        sameSite: "lax",
         maxAge: 60 * 60 * 1000,
       })
       .cookie("refreshToken", refreshToken, {
@@ -186,6 +187,15 @@ app.post("/api/role", async (req, res) => {
   }
 });
 
+app.get(
+  "/api/adminonly",
+  authenticateToken,
+  checkRolesPermission(8228,8803),
+  async (req, res) => {
+    res.status(200).send({message: "You have access to this admin-only route."});
+  }
+);
+
 app.put("/api/role", async (req, res) => {
   try {
     const { ID } = req.body;
@@ -213,6 +223,7 @@ interface CustomRequest extends Request {
 interface User {
   phoneNumber: string;
   name: string;
+  roleID: number;
 }
 
 function authenticateToken(
@@ -221,9 +232,9 @@ function authenticateToken(
   next: NextFunction
 ) {
   try {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
-
+    // const authHeader = req.cookies.accessToken; 
+    // const token = authHeader && authHeader.split(" ")[1];
+    const token = req.cookies.accessToken;
     if (!token) {
       res.sendStatus(401);
       return;
@@ -233,6 +244,7 @@ function authenticateToken(
       process.env.ACCESS_TOKEN_SECRET,
       (err: Error | null, user: any) => {
         if (err) {
+          console.error(err);
           res.sendStatus(403);
           return;
         }
@@ -244,6 +256,32 @@ function authenticateToken(
     console.error(error);
   }
 }
+
+function checkRolesPermission(...allowedRoles: (number)[]) {
+  return async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+      const userRole = req.user?.roleID || 0;
+
+      if (!userRole) {
+        res.status(403).json({ message: "No role found" });
+        return;
+      }
+
+      if (!allowedRoles.includes(userRole)) {
+        console.log(allowedRoles);
+        console.log(userRole);
+        res.status(403).json({ message: "Access denied" });
+        return;
+      }
+
+      next();
+    } catch (error) {
+      console.error("Error in authorizeRoles middleware:", error);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  };
+}
+
 
 // function generateToken() {}
 
