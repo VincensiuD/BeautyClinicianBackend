@@ -38,13 +38,16 @@ mongoose
     console.error(error);
   });
 
+  /** CLINICIANS */
+
+//#region  Clinicians
 // Post new clinician
-app.post("/api/clinician", authenticateToken, async (req, res) => {
+app.post("/api/clinician", authenticateToken,checkRolesPermission(8228,8803), async (req, res) => {
   try {
-    //console.log(req.body);
     await Clinician.create(req.body);
-    res.send("data created in DB");
+    res.status(201).send({message: "data created in DB"});
   } catch (error) {
+    res.status(400).send({message: error});
     console.error("ERROR ", error);
   }
 });
@@ -67,8 +70,8 @@ app.get("/api/clinicians", async (req, res) => {
     }));
 
     res.status(200).json(formatted);
-    console.log("sent ");
   } catch (error) {
+    res.status(400).send({message: error});
     console.error("ERROR ", error);
   }
 });
@@ -77,18 +80,32 @@ app.get("/api/clinicians", async (req, res) => {
 app.get("/api/clinician/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const clinicans = await Clinician.findById(id);
-    res.status(200).json(clinicans);
-    console.log("sent ");
+    const clinician = await Clinician.findById(id);
+    res.status(200).json(clinician);
   } catch (error) {
     console.error("ERROR ", error);
   }
 });
 
 //Edit clinician
-app.put("/api/clinician", async (req, res) => {});
+app.put("/api/clinician/:id",authenticateToken,checkRolesPermission(8228,8803), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {clinicianObj} = req.body;
+    const updatedClinician = await Clinician.findByIdAndUpdate(
+      id,
+      { $set: clinicianObj },
+      { new: true, runValidators: true }
+    );
+    res.status(200).json(updatedClinician);
+  } catch (error) {
+    console.error("Error",error);
+  }
+});
 
-const users = [];
+//#endregion
+
+  /** USERS */
 
 //create user
 app.post("/api/user", async (req, res) => {
