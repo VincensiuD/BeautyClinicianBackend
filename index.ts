@@ -67,6 +67,7 @@ app.get("/api/clinicians", async (req, res) => {
       title: (c.titleID as any).name, // cast to access title name
       description: c.description,
       image: c.image,
+      titleID: (c.titleID as any)._id
     }));
 
     res.status(200).json(formatted);
@@ -210,6 +211,23 @@ app.get(
   checkRolesPermission(8228,8803),
   async (req, res) => {
     res.status(200).send({message: "You have access to this admin-only route."});
+  }
+);
+
+app.get(
+  "/api/titles",
+  async (req, res) => {
+    try {
+      const titles = await Title.find();
+      const modifiedTitles = titles.map(({_id,name}) => ({"ID": _id, name}))
+      .filter(item => item.ID !== 11);
+      res.status(200).json(modifiedTitles);
+
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({message: "Unable to retrieve titles"});
+    }
+
   }
 );
 

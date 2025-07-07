@@ -42,4 +42,5 @@ export interface IClinician {
     title: string;
     description: string;
     image: string;
+    titleID: number;
 }
