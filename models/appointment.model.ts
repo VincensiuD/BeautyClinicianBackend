@@ -7,24 +7,24 @@ const AppointmentSchema = new mongoose.Schema(
       required: true,
     },
 
-    clientID: {
-      type: Number,
+    clientNumber: {
+      type: String,
       required: true,
     },
 
-    startDate: {
+    dateTimeStart: {
       type: Date,
       required: true,
     },
 
-    endDate: {
+    dateTimeEnd: {
       type: Date,
       required: true,
     },
 
-    current: {
-      type: Boolean,
-      required: true,
+    comments: {
+      type: String,
+      required: false,
     },
   },
   {
@@ -32,5 +32,13 @@ const AppointmentSchema = new mongoose.Schema(
   }
 );
 
-const Appointment = mongoose.model("Appointment", AppointmentSchema);
-module.exports = Appointment;
+export const Appointment = mongoose.model("Appointment", AppointmentSchema);
+
+export interface IAppointment {
+  ID: number;
+  clinicianID: number;
+  clientNumber: string;
+  dateTimeStart: string;
+  dateTimeEnd: string;
+  comments?: string;
+}
