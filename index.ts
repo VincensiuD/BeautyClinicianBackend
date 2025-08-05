@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from "express";
 import { User } from "./models/user.model";
 import { Title } from "./models/title.models";
 import { Clinician } from "./models/clinician.model";
+import {Appointment} from "./models/appointment.model";
 import cookieParser from "cookie-parser";
 
 
@@ -83,6 +84,17 @@ app.get("/api/clinician/:id", authenticateToken, async (req, res) => {
     const { id } = req.params;
     const clinician = await Clinician.findById(id);
     res.status(200).json(clinician);
+  } catch (error) {
+    console.error("ERROR ", error);
+  }
+});
+
+//Retrieve clinician bookings - authtoken disabled
+app.get("/api/appointments/:clinicianID", async (req, res) => {
+  try {
+    const { clinicianID } = req.params;
+    const appointments = await Appointment.find({ clinicianID });
+    res.status(200).json(appointments);
   } catch (error) {
     console.error("ERROR ", error);
   }
@@ -330,3 +342,18 @@ app.post("/api/title", async (req, res) => {
     res.status(500).send(error);
   }
 });
+
+app.put("/api/appointments", async (req,res) => {
+  try {
+    const appointmentDTO = req.body;
+    console.log(req.body);
+
+    await Appointment.create(appointmentDTO);
+    res.status(201).send("New Title Created");
+    
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(error);
+  }
+
+})
