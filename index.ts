@@ -18,8 +18,8 @@ const allowedOrigins: string[] = [
   "https://vincensiu.com",
 ];
 
-const corsOptions: CorsOptions = {
-  origin: (origin: string | undefined, callback) => {
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
