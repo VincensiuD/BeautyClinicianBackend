@@ -13,7 +13,23 @@ const { Role } = require("./models/role.model.ts");
 require("dotenv").config();
 
 const app = express();
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+const allowedOrigins: string[] = [
+  "http://localhost:5173",
+  "https://vincensiu.com",
+];
+
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 const jwt = require("jsonwebtoken");
